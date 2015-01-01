@@ -1,7 +1,9 @@
 import os
+import re
+import hashlib
 import struct
-import json
-import binascii
+import msgpack
+import subprocess
 from collections import *
 from elftools.elf.elffile import *
 from capstone import *
@@ -291,7 +293,7 @@ def GetFin(ins,relflag):
                 opfin.append((op.type,None))
             else:
                 if X86_GRP_JUMP in ins.groups or X86_GRP_CALL in ins.groups:
-                    opfin.append((op.type,binascii.hexlify(ins.bytes)))
+                    opfin.append((op.type,bytes(ins.bytes)))
                 else:
                     opfin.append((op.type,op.value.imm))
 
@@ -368,17 +370,29 @@ def FuncFin(loc,vis):
     return fin
 
 def gen_db(conn):
+    objdic = {}
+
+    for archobj in os.listdir('archobj'):
+        name = re.findall('(.+)\.a',archobj)
+        if len(name) != 1:
+            continue
+        name = name[0]
+        try:
+            os.mkdir('archobj/' + name)
+        except OSError:
+            pass
+        
+        p = subprocess.Popen(['ar','-x','../%s.a'%name],cwd = 'archobj/' + name)
+        p.wait()
+
+        for obj in os.listdir('archobj/' + name):
+            objdic[obj] = OBJ('archobj/' + name + '/' + obj,obj)
 
     '''
-    objdic = {}
-    for obj in os.listdir('libc'):
-        objdic[obj] = OBJ('libc/' + obj,obj)
 
     for obj in os.listdir('pthread'):
         objdic[obj] = OBJ('pthread/' + obj,obj)
-    '''
 
-    '''
     for obj in os.listdir('glib'):
         objdic[obj] = OBJ('glib/' + obj,obj)
 
@@ -397,22 +411,22 @@ def gen_db(conn):
 
     Resolve(objdic)
 
-    fin_db = {}
-    fin_log = {}
+    finlog = {}
     for obj in objdic.values():
         for sym in obj.sym_export.values():
             fin = FuncFin((obj.section[sym.shndx],sym.value),set())
-            finhash = json.dumps(fin)
+            finlen = len(fin)
+            finbin = msgpack.packb(fin)
+            finhash = hashlib.sha1(finbin)
             label = "%s # %s"%(obj.name,sym.name)
             print(label)
-            if finhash not in fin_log:
-                fin_log[finhash] = label
-                fin_db[label] = fin
+            if finhash not in finlog:
+                finlog[finhash] = label
+                conn.execute('INSERT INTO flowfin VALUES (?,?,?);',
+                        (label,finlen,buffer(finbin)))
             elif sym.name[0] != '_':
-                del fin_db[fin_log[finhash]]
-                fin_log[finhash] = label
-                fin_db[label] = fin
+                conn.execute('UPDATE flowfin SET label=? WHERE label=?;',
+                        (label,finlog[finhash]))
+                finlog[finhash] = label
 
-    db_f = open('db','wb')
-    json.dump(fin_db,db_f)
-    db_f.close()
+    conn.commit()
