@@ -13,9 +13,10 @@ if __name__ == '__main__':
     except sqlite3.OperationalError:
         pass
 
-    gen_db(conn)
+    if 'gendb' in sys.argv:
+        gen_db(conn)
 
-    filepath = sys.argv[1]
+    filepath = sys.argv[-1]
     exe = EXE(filepath,filepath)
 
     mark_list = []

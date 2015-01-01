@@ -388,27 +388,6 @@ def gen_db(conn):
         for obj in os.listdir('archobj/' + name):
             objdic[obj] = OBJ('archobj/' + name + '/' + obj,obj)
 
-    '''
-
-    for obj in os.listdir('pthread'):
-        objdic[obj] = OBJ('pthread/' + obj,obj)
-
-    for obj in os.listdir('glib'):
-        objdic[obj] = OBJ('glib/' + obj,obj)
-
-    for obj in os.listdir('gobject'):
-        objdic[obj] = OBJ('gobject/' + obj,obj)
-
-    for obj in os.listdir('gmodule'):
-        objdic[obj] = OBJ('gmodule/' + obj,obj)
-
-    for obj in os.listdir('gio'):
-        objdic[obj] = OBJ('gio/' + obj,obj)
-
-    for obj in os.listdir('gthread'):
-        objdic[obj] = OBJ('gthread/' + obj,obj)
-    '''
-
     Resolve(objdic)
 
     for obj in objdic.values():
