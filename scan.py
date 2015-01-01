@@ -411,22 +411,23 @@ def gen_db(conn):
 
     Resolve(objdic)
 
-    finlog = {}
     for obj in objdic.values():
         for sym in obj.sym_export.values():
             fin = FuncFin((obj.section[sym.shndx],sym.value),set())
             finlen = len(fin)
             finbin = msgpack.packb(fin)
-            finhash = hashlib.sha1(finbin)
+            finhash = hashlib.sha1(finbin).hexdigest()
             label = "%s # %s"%(obj.name,sym.name)
             print(label)
-            if finhash not in finlog:
-                finlog[finhash] = label
-                conn.execute('INSERT INTO flowfin VALUES (?,?,?);',
-                        (label,finlen,buffer(finbin)))
+
+            cur = conn.execute('SELECT label FROM flowfin WHERE hash=?',
+                    (finhash,))
+            finent = cur.fetchone()
+            if finent == None:
+                conn.execute('INSERT INTO flowfin VALUES (?,?,?,?);',
+                        (label,finlen,buffer(finbin),finhash))
             elif sym.name[0] != '_':
                 conn.execute('UPDATE flowfin SET label=? WHERE label=?;',
-                        (label,finlog[finhash]))
-                finlog[finhash] = label
+                        (label,finent[0]))
 
     conn.commit()

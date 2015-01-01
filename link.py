@@ -7,8 +7,9 @@ from mark import *
 if __name__ == '__main__':
     conn = sqlite3.connect('fin.db')
     try:
-        conn.execute('CREATE TABLE flowfin (label text primary key,len int,fin blob);')
+        conn.execute('CREATE TABLE flowfin (label text primary key,len int,fin blob,hash text);')
         conn.execute('CREATE INDEX index_flowfin_len ON flowfin (len);')
+        conn.execute('CREATE INDEX index_flowfin_hash ON flowfin (hash);')
     except sqlite3.OperationalError:
         pass
 
