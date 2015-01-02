@@ -25,6 +25,11 @@ Unstrip statically linked stripped binary
 1. python2 unstrip.py `<your binary>`
 2. It will generate the unstripped binary named as `<your binary>.mark `
 
+Future work
+-----------
+1. Greatly improve the matching methods.
+2. Use symbolic execution to provide better basic block scan.
+
 Demo
 ----
 Source code, compile `gcc -static -s test.c -o test`
