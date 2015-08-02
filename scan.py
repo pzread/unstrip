@@ -86,8 +86,7 @@ class OBJ(ELF):
                 for stndx,elf_sym in enumerate(elf_sec.iter_symbols()):
                     sym = Symbol(self,stndx,elf_sym)
                     self.sym_list.append(sym)
-                    if (elf_sym.entry['st_info']['bind'] not in
-                            ['STB_GLOBAL','STB_WEAK']):
+                    if elf_sym.entry['st_info']['bind'] not in ['STB_GLOBAL','STB_WEAK']:
                         continue
 
                     if sym.type == 'STT_FUNC':
@@ -105,8 +104,7 @@ class OBJ(ELF):
                     if not elf_reloc.is_RELA():
                         continue
 
-                    self.reloc.append(
-                            Reloc(self,elf_sec.header['sh_info'],elf_reloc))
+                    self.reloc.append(Reloc(self,elf_sec.header['sh_info'],elf_reloc))
 
 class EXE(ELF):
     def __init__(self,path,name):
