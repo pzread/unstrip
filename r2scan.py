@@ -47,7 +47,7 @@ class R2Com:
                 return ret.decode('utf-8')
             ret += data
 
-class Fin():
+class Fin:
     def __init__(self,path):
         self.path = path
         self.r2 = R2Com(path)
@@ -73,7 +73,7 @@ class Fin():
 
     def fin_ins(self,ins):
         if ARCH == CS_MODE_32 or ARCH == CS_MODE_64:
-            odfin = fin_operand_x86(ins.operands)
+            odfin = self.fin_operand_x86(ins.operands)
         return (ins.id,odfin)
 
     def fin_blk(self,blk):
@@ -84,7 +84,7 @@ class Fin():
             if typ == 'invalid':
                 continue
             for ins in md.disasm(binascii.unhexlify(op['bytes']),0x0):
-                opfin.append(fin_ins(ins))
+                opfin.append(self.fin_ins(ins))
         return opfin
 
     def get_funclist(self):
@@ -103,7 +103,7 @@ class Fin():
 
     def gen_fin(self):
         funcfin = dict()
-        for func in get_funclist():
+        for func in self.get_funclist():
             print(func['name'])
 
             cfgs = self.r2.cmdj('agj %d'%func['offset'])
@@ -133,11 +133,11 @@ class Fin():
                     if 'fail' in blk:
                         worklist.append(blk['fail'])
 
-                    blkfin[addr] = fin_blk(blk)
+                    blkfin[addr] = self.fin_blk(blk)
 
             funcfin[func['offset']] = (func['name'],blkfin)
 
-        print(len(funcfin))
-        open(path + '.findump','w').write(json.dumps(funcfin))
+        return funcfin
 
-gen_fin('libc.so.6-1')
+fin = Fin('libc.so.6-1')
+fin.gen_fin()
